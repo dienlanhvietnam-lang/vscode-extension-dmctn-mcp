@@ -1,0 +1,121 @@
+{
+  "name": "dmctn-mcp",
+  "displayName": "DMCTN MCP — local-coding-tools",
+  "description": "Auto-register local-coding-tools MCP and sync DMCTN-MCP Copilot agent for VS Code workspaces.",
+  "version": "0.3.0",
+  "publisher": "devgol",
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/devgol/vscode-extension-dmctn-mcp.git"
+  },
+  "license": "MIT",
+  "engines": {
+    "vscode": "^1.99.0"
+  },
+  "categories": [
+    "Other",
+    "Machine Learning"
+  ],
+  "activationEvents": [
+    "onStartupFinished"
+  ],
+  "main": "./dist/extension.js",
+  "contributes": {
+    "viewsContainers": {
+      "activitybar": [
+        {
+          "id": "dmctnMcp",
+          "title": "DMCTN MCP",
+          "icon": "resources/icon.svg"
+        }
+      ]
+    },
+    "views": {
+      "dmctnMcp": [
+        {
+          "type": "webview",
+          "id": "dmctnMcp.dashboard",
+          "name": "Bảng điều khiển",
+          "icon": "resources/icon.svg"
+        }
+      ]
+    },
+    "commands": [
+      {
+        "command": "dmctnMcp.setupWorkspace",
+        "title": "DMCTN MCP: Setup Workspace (mcp.json + DMCTN-MCP agent)"
+      },
+      {
+        "command": "dmctnMcp.showAgentHint",
+        "title": "DMCTN MCP: Show DMCTN-MCP Agent Selection Hint"
+      },
+      {
+        "command": "dmctnMcp.verifyServer",
+        "title": "DMCTN MCP: Verify MCP Server Build"
+      },
+      {
+        "command": "dmctnMcp.openDashboard",
+        "title": "DMCTN MCP: Mở bảng điều khiển"
+      },
+      {
+        "command": "dmctnMcp.reinstallServer",
+        "title": "DMCTN MCP: Tải lại MCP server từ Release"
+      }
+    ],
+    "configuration": {
+      "title": "DMCTN MCP",
+      "properties": {
+        "dmctnMcp.serverRoot": {
+          "type": "string",
+          "default": "",
+          "description": "Absolute path to local-coding-tools-mcp (contains dist/server.js). Empty = auto-detect sibling folder in workspace."
+        },
+        "dmctnMcp.autoSyncOnOpen": {
+          "type": "boolean",
+          "default": true,
+          "description": "Sync .vscode/mcp.json and DMCTN-MCP agent files when a workspace opens."
+        },
+        "dmctnMcp.showAgentHintOnOpen": {
+          "type": "boolean",
+          "default": true,
+          "description": "Show a reminder to select the DMCTN-MCP Copilot agent after workspace sync."
+        },
+        "dmctnMcp.serverVersion": {
+          "type": "string",
+          "default": "",
+          "description": "MCP server version to install. Empty = use bundled server-manifest.json."
+        },
+        "dmctnMcp.serverDownloadUrl": {
+          "type": "string",
+          "default": "",
+          "description": "Override URL for customer ZIP download. Empty = use manifest GitHub Release URL."
+        },
+        "dmctnMcp.autoBootstrapServer": {
+          "type": "boolean",
+          "default": true,
+          "description": "Auto-download MCP server from Release ZIP when installing if not present locally."
+        }
+      }
+    },
+    "mcpServerDefinitionProviders": [
+      {
+        "id": "dmctn-local-coding-tools",
+        "label": "DMCTN local-coding-tools MCP"
+      }
+    ]
+  },
+  "scripts": {
+    "compile": "tsc -p ./",
+    "watch": "tsc -watch -p ./",
+    "test": "npm run compile && node tests/run-tests.mjs",
+    "test:bootstrap-local": "npm run compile && node scripts/test-bootstrap-local.mjs",
+    "package": "npm run test && vsce package --no-dependencies",
+    "vscode:prepublish": "npm run compile"
+  },
+  "devDependencies": {
+    "@types/node": "^22.15.21",
+    "@types/vscode": "^1.99.0",
+    "@vscode/vsce": "^3.2.1",
+    "typescript": "^5.8.3"
+  }
+}
