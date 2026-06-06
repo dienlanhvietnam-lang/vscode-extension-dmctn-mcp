@@ -3,11 +3,7 @@ import * as path from "node:path";
 import { MCP_PROVIDER_ID, SERVER_LABEL } from "./config";
 import { DashboardProvider } from "./dashboardProvider";
 import { buildMcpJsonContent, resolveServerRoot } from "./paths";
-import {
-  ensureMcpServer,
-  GLOBAL_STATE_VERSION_KEY,
-  removeBundledServer,
-} from "./serverBootstrap";
+import { reinstallMcpServer } from "./serverBootstrap";
 import { syncWorkspaceFiles } from "./syncWorkspace";
 
 let mcpChangeEmitter = new vscode.EventEmitter<void>();
@@ -105,41 +101,7 @@ export function activate(context: vscode.ExtensionContext): void {
   });
 
   const reinstallCmd = vscode.commands.registerCommand("dmctnMcp.reinstallServer", async () => {
-    const choice = await vscode.window.showWarningMessage(
-      "Tải lại MCP server từ GitHub Release? Thư mục bundled sẽ bị xóa và tải lại.",
-      { modal: true },
-      "Tải lại"
-    );
-    if (choice !== "Tải lại") return;
-
-    removeBundledServer();
-    await context.globalState.update(GLOBAL_STATE_VERSION_KEY, undefined);
-
-    const cfg = vscode.workspace.getConfiguration("dmctnMcp");
-    const result = await vscode.window.withProgress(
-      {
-        location: vscode.ProgressLocation.Notification,
-        title: "DMCTN MCP — Tải lại server",
-        cancellable: false,
-      },
-      async (progress) =>
-        ensureMcpServer({
-          extensionResourcesPath: templatesRoot,
-          globalState: context.globalState,
-          configuredVersion: cfg.get<string>("serverVersion", ""),
-          configuredUrl: cfg.get<string>("serverDownloadUrl", ""),
-          force: true,
-          onProgress: (m) => progress.report({ message: m }),
-        })
-    );
-
-    if (result.ok) {
-      mcpChangeEmitter.fire();
-      dashboardProvider?.refresh();
-      void vscode.window.showInformationMessage("DMCTN MCP: Tải lại server thành công.");
-    } else {
-      void vscode.window.showErrorMessage(`DMCTN MCP: ${result.error ?? "Tải lại thất bại"}`);
-    }
+    await dashboardProvider?.runReinstallServer();
   });
 
   context.subscriptions.push(setupCmd, hintCmd, verifyCmd, openDashboardCmd, reinstallCmd);

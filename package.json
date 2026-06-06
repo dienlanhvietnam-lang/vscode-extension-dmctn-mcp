@@ -2,7 +2,7 @@
   "name": "dmctn-mcp",
   "displayName": "DMCTN MCP — local-coding-tools",
   "description": "Auto-register local-coding-tools MCP and sync DMCTN-MCP Copilot agent for VS Code workspaces.",
-  "version": "0.3.4",
+  "version": "0.3.5",
   "publisher": "devgol",
   "repository": {
     "type": "git",
@@ -59,7 +59,7 @@
       },
       {
         "command": "dmctnMcp.reinstallServer",
-        "title": "DMCTN MCP: Tải lại MCP server từ Release"
+        "title": "DMCTN MCP: Reinstall Server"
       }
     ],
     "configuration": {

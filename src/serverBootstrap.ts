@@ -294,3 +294,21 @@ export function removeBundledServer(): void {
     fs.rmSync(root, { recursive: true, force: true });
   }
 }
+
+export function readBundledPackageVersion(serverRoot = getBundledServerRoot()): string | undefined {
+  try {
+    const pkg = JSON.parse(fs.readFileSync(path.join(serverRoot, "package.json"), "utf8")) as {
+      version?: string;
+    };
+    return typeof pkg.version === "string" ? pkg.version : undefined;
+  } catch {
+    return undefined;
+  }
+}
+
+/** Xóa bundled server, tải lại ZIP từ manifest (force). */
+export async function reinstallMcpServer(options: BootstrapOptions): Promise<BootstrapResult> {
+  removeBundledServer();
+  await options.globalState.update(GLOBAL_STATE_VERSION_KEY, undefined);
+  return ensureMcpServer({ ...options, force: true });
+}

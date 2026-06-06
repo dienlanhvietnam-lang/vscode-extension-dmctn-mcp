@@ -10,6 +10,8 @@ import {
   getBundledServerRoot,
   GLOBAL_STATE_VERSION_KEY,
   isBundledServerReady,
+  readBundledPackageVersion,
+  reinstallMcpServer,
 } from "./serverBootstrap";
 import { syncWorkspaceFiles } from "./syncWorkspace";
 import { uninstallWorkspaceFiles } from "./uninstallWorkspace";
@@ -59,6 +61,9 @@ export class DashboardProvider implements vscode.WebviewViewProvider {
         case "openNodeDownload":
           void vscode.env.openExternal(vscode.Uri.parse(NODE_DOWNLOAD_URL));
           break;
+        case "reinstall":
+          await this.handleReinstall();
+          break;
       }
     });
 
@@ -100,7 +105,11 @@ export class DashboardProvider implements vscode.WebviewViewProvider {
     const installedVer = this.context.globalState.get<string>(GLOBAL_STATE_VERSION_KEY);
     const bundledRoot = getBundledServerRoot();
     const serverBundled = isBundledServerReady(bundledRoot);
-    const serverVersion = installedVer || manifest.version;
+    const bundledPkgVer = readBundledPackageVersion(bundledRoot);
+    const serverVersion = bundledPkgVer || installedVer || manifest.version;
+    const serverUpdateAvailable =
+      Boolean(bundledPkgVer && bundledPkgVer !== manifest.version) ||
+      Boolean(installedVer && installedVer !== manifest.version);
 
     const folder = this.getPrimaryFolder();
     if (!folder) {
@@ -118,6 +127,8 @@ export class DashboardProvider implements vscode.WebviewViewProvider {
         serverVersion,
         bootstrapLog: this.bootstrapLog,
         canInstall: this.nodeOk,
+        serverUpdateAvailable,
+        manifestVersion: manifest.version,
       });
       return;
     }
@@ -144,7 +155,96 @@ export class DashboardProvider implements vscode.WebviewViewProvider {
       serverVersion,
       bootstrapLog: this.bootstrapLog,
       canInstall: this.nodeOk,
+      serverUpdateAvailable,
+      manifestVersion: manifest.version,
     });
+  }
+
+  /** Command palette + dashboard — tải lại MCP server từ Release. */
+  async runReinstallServer(): Promise<void> {
+    const choice = await vscode.window.showWarningMessage(
+      "Tải lại MCP server từ GitHub Release? Thư mục bundled sẽ bị xóa và tải lại.",
+      { modal: true },
+      "Tải lại"
+    );
+    if (choice !== "Tải lại") return;
+    await this.handleReinstall();
+  }
+
+  private async handleReinstall(): Promise<void> {
+    const folder = this.getPrimaryFolder();
+    const cfg = this.getDmctnConfig();
+    const manifest = loadServerManifest(this.templatesRoot);
+
+    const nodeCheck = await checkSystemNode(manifest.minNodeMajor ?? 18);
+    if (!nodeCheck.ok) {
+      void vscode.window
+        .showErrorMessage(`DMCTN MCP: ${nodeCheck.message}`, "Tải Node.js")
+        .then((c) => {
+          if (c === "Tải Node.js") {
+            void vscode.env.openExternal(vscode.Uri.parse(NODE_DOWNLOAD_URL));
+          }
+        });
+      return;
+    }
+
+    this.busy = true;
+    this.bootstrapLog = "";
+    await this.postState();
+
+    const result = await vscode.window.withProgress(
+      {
+        location: vscode.ProgressLocation.Notification,
+        title: "DMCTN MCP — Reinstall Server",
+        cancellable: false,
+      },
+      async (progress) =>
+        reinstallMcpServer({
+          extensionResourcesPath: this.templatesRoot,
+          globalState: this.context.globalState,
+          configuredVersion: cfg.get<string>("serverVersion", ""),
+          configuredUrl: cfg.get<string>("serverDownloadUrl", ""),
+          onProgress: (m) => progress.report({ message: m }),
+        })
+    );
+
+    this.bootstrapLog = result.log.join("\n");
+
+    if (!result.ok) {
+      this.busy = false;
+      void vscode.window.showErrorMessage(`DMCTN MCP: ${result.error ?? "Tải lại thất bại"}`);
+      await this.postState();
+      return;
+    }
+
+    if (folder) {
+      const ws = folder.uri.fsPath;
+      const resolved = resolveServerRoot([ws], cfg.get<string>("serverRoot", ""));
+      if (resolved.ok && resolved.serverJs && resolved.serverRoot) {
+        syncWorkspaceFiles({
+          workspaceRoot: ws,
+          mcpJsonContent: buildMcpJsonContent(resolved.serverJs, resolved.serverRoot),
+          extensionResourcePath: this.templatesRoot,
+          backupExisting: true,
+        });
+      }
+    }
+
+    this.busy = false;
+    this.onMcpChanged();
+
+    void vscode.window
+      .showInformationMessage(
+        "DMCTN MCP: Tải lại server thành công. Nên Reload Window.",
+        "Tải lại cửa sổ"
+      )
+      .then((c) => {
+        if (c === "Tải lại cửa sổ") {
+          void vscode.commands.executeCommand("workbench.action.reloadWindow");
+        }
+      });
+
+    await this.postState();
   }
 
   private async handleInstall(): Promise<void> {

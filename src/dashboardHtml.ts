@@ -10,6 +10,8 @@ export interface DashboardViewModel {
   nodeVersion: string;
   serverBundled: boolean;
   serverVersion: string;
+  manifestVersion: string;
+  serverUpdateAvailable: boolean;
   bootstrapLog: string;
   canInstall: boolean;
 }
@@ -39,6 +41,10 @@ export function renderDashboardHtml(vm: DashboardViewModel): string {
     vm.serverOk || vm.serverBundled
       ? ""
       : '<p class="warn-text">⚠ Lần đầu cần mạng để tải MCP server từ GitHub Release.</p>';
+
+  const updateWarn = vm.serverUpdateAvailable
+    ? `<p class="warn-text">⚠ Server đang <strong>v${escapeHtml(vm.serverVersion)}</strong> — manifest <strong>v${escapeHtml(vm.manifestVersion)}</strong>. Bấm <strong>Tải lại MCP server</strong>.</p>`
+    : "";
 
   const details = vm.statusLines.map((l) => `<li>${escapeHtml(l)}</li>`).join("");
   const testBlock = vm.testLog
@@ -140,6 +146,7 @@ export function renderDashboardHtml(vm: DashboardViewModel): string {
   <div class="badges">${statusBadge}${nodeBadge}${serverBadge}</div>
   ${nodeWarn}
   ${serverWarn}
+  ${updateWarn}
 
   <div class="card">
     <h2>Trạng thái cài đặt</h2>
@@ -148,6 +155,7 @@ export function renderDashboardHtml(vm: DashboardViewModel): string {
 
   <div class="actions">
     <button id="btnInstall" ${installDisabled} data-action="install">${installLabel}</button>
+    <button id="btnReinstall" class="secondary" ${vm.busy || !vm.nodeOk ? "disabled" : ""} data-action="reinstall">Tải lại MCP server (Reinstall)</button>
     ${nodeBtn}
     <button id="btnTest" class="secondary" ${vm.busy || !vm.serverOk ? "disabled" : ""} data-action="test">Kiểm tra MCP</button>
     <button id="btnUninstall" class="danger" ${vm.busy || !vm.installed ? "disabled" : ""} data-action="uninstall">Gỡ MCP khỏi VS Code</button>
@@ -167,6 +175,7 @@ export function renderDashboardHtml(vm: DashboardViewModel): string {
       <li>Cài <strong>Node.js LTS ≥ 18</strong> nếu chưa có (nút Tải Node.js).</li>
       <li>Mở bất kỳ workspace nào trong VS Code.</li>
       <li>Bấm <strong>Cài đặt MCP DMCTN</strong> — extension tự tải MCP server (lần đầu cần mạng).</li>
+      <li>Đã cài nhưng cần bản mới → <strong>Tải lại MCP server (Reinstall)</strong> hoặc Command Palette: <code>DMCTN MCP: Reinstall Server</code>.</li>
       <li><strong>Developer: Reload Window</strong> (Ctrl+Shift+P).</li>
       <li>Mở <strong>Copilot Chat</strong> → chọn agent <strong>DMCTN-MCP</strong>.</li>
       <li>Gửi thử: <code>Gọi check_system qua MCP local-coding-tools</code></li>
