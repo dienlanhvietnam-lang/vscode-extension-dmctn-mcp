@@ -13,6 +13,7 @@ const require = createRequire(import.meta.url);
 const { buildMcpJsonContent, resolveServerRoot } = require(path.join(ROOT, "dist/paths.js"));
 const { syncWorkspaceFiles, validateMcpJsonContent } = require(path.join(ROOT, "dist/syncWorkspace.js"));
 const { getInstallStatus } = require(path.join(ROOT, "dist/installStatus.js"));
+const { parsePilotReport } = require(path.join(ROOT, "dist/mcpTest.js"));
 const { uninstallWorkspaceFiles } = require(path.join(ROOT, "dist/uninstallWorkspace.js"));
 const { parseNodeMajor } = require(path.join(ROOT, "dist/nodeCheck.js"));
 const {
@@ -48,9 +49,10 @@ function testParseNodeMajor() {
 
 function testServerManifest() {
   const m = loadServerManifest(path.join(ROOT, "resources"));
-  assert.equal(m.version, "0.7.0");
+  assert.equal(m.version, "0.8.0");
   assert.ok(m.downloadUrl.includes("github.com"));
   assert.match(m.sha256, /^[A-F0-9]{64}$/);
+  assert.equal(m.sha256, "051079091CECF2D6706F91BD7B0B6824531A39E5E974C6E2A706EBD1279433EE");
   assert.equal(m.minNodeMajor, 18);
   console.log("PASS serverManifest");
 }
@@ -59,8 +61,8 @@ function testBundledServerPaths() {
   const root = getBundledServerRoot();
   assert.ok(root.includes(".dmctn"));
   assert.ok(root.includes("local-coding-tools-mcp"));
-  assert.equal(needsServerBootstrap(root, "0.7.0", undefined), true);
-  assert.equal(needsServerBootstrap(root, "0.7.0", "0.7.0"), !isBundledServerReady(root));
+  assert.equal(needsServerBootstrap(root, "0.8.0", undefined), true);
+  assert.equal(needsServerBootstrap(root, "0.8.0", "0.8.0"), !isBundledServerReady(root));
   console.log("PASS bundledServerPaths");
 }
 
@@ -171,7 +173,7 @@ async function testAcquireZipLocal() {
     "..",
     "local-coding-tools-mcp",
     "release",
-    "local-coding-tools-mcp-v0.7.0-customer.zip"
+    "local-coding-tools-mcp-v0.8.0-customer.zip"
   );
   if (!fs.existsSync(srcZip)) {
     console.log("SKIP acquireZipFile local — customer zip not built");
@@ -191,7 +193,7 @@ async function testExtractZip() {
     "..",
     "local-coding-tools-mcp",
     "release",
-    "local-coding-tools-mcp-v0.7.0-customer.zip"
+    "local-coding-tools-mcp-v0.8.0-customer.zip"
   );
   if (!fs.existsSync(srcZip)) {
     console.log("SKIP extractZip — customer zip not built");
@@ -206,12 +208,24 @@ async function testExtractZip() {
   console.log("PASS extractZip");
 }
 
+function testParsePilotReport() {
+  const sample = `{
+  "initialize": "PASS",
+  "toolCount": 28,
+  "check_system": "PASS"
+}`;
+  const p = parsePilotReport(sample);
+  assert.equal(p.initialize, "PASS");
+  assert.equal(p.toolCount, 28);
+  console.log("PASS parsePilotReport");
+}
+
 function testPackageJson() {
   const pkg = JSON.parse(fs.readFileSync(path.join(ROOT, "package.json"), "utf8"));
   assert.ok(pkg.contributes?.mcpServerDefinitionProviders?.length);
   assert.ok(pkg.contributes?.viewsContainers?.activitybar?.length);
   assert.ok(pkg.contributes?.views?.dmctnMcp?.length);
-  assert.equal(pkg.version, "0.3.0");
+  assert.equal(pkg.version, "0.3.4");
   assert.ok(pkg.contributes.configuration.properties["dmctnMcp.autoBootstrapServer"]);
   assert.ok(pkg.contributes.configuration.properties["dmctnMcp.serverDownloadUrl"]);
   assert.equal(pkg.engines.vscode, "^1.99.0");
@@ -232,6 +246,7 @@ async function runAll() {
   testUninstallWorkspace();
   await testAcquireZipLocal();
   await testExtractZip();
+  testParsePilotReport();
   testPackageJson();
   console.log("\nALL TESTS PASS");
 }

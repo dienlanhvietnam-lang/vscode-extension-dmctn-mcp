@@ -1,6 +1,7 @@
 import { spawn } from "node:child_process";
 import * as fs from "node:fs";
 import * as path from "node:path";
+import { getSystemNodeCommand } from "./nodeCheck";
 
 export interface McpTestResult {
   ok: boolean;
@@ -9,10 +10,33 @@ export interface McpTestResult {
   durationMs: number;
 }
 
-/** Chạy pilot-stdio.mjs — không dùng npx. */
+interface PilotReport {
+  initialize?: string;
+  toolsList?: string;
+  toolCount?: number;
+  check_system?: string;
+  run_coding_session?: string;
+  error?: string;
+}
+
+/** pilot-stdio in JSON pretty-print (multi-line) — lấy object đầu/cuối { }. */
+export function parsePilotReport(stdout: string): PilotReport {
+  const trimmed = stdout.trim();
+  const start = trimmed.indexOf("{");
+  const end = trimmed.lastIndexOf("}");
+  if (start < 0 || end <= start) return {};
+  try {
+    return JSON.parse(trimmed.slice(start, end + 1)) as PilotReport;
+  } catch {
+    return {};
+  }
+}
+
+/** Chạy pilot-stdio.mjs bằng Node hệ thống (PATH) — không dùng process.execPath của IDE. */
 export function runMcpSmokeTest(serverRoot: string, workspacePath: string): Promise<McpTestResult> {
   const script = path.join(serverRoot, "scripts", "pilot-stdio.mjs");
   const start = Date.now();
+  const nodeCmd = getSystemNodeCommand();
 
   if (!fs.existsSync(script)) {
     return Promise.resolve({
@@ -23,10 +47,11 @@ export function runMcpSmokeTest(serverRoot: string, workspacePath: string): Prom
   }
 
   return new Promise((resolve) => {
-    const child = spawn(process.execPath, [script, workspacePath], {
+    const child = spawn(nodeCmd, [script, workspacePath], {
       cwd: serverRoot,
       shell: false,
       windowsHide: true,
+      env: { ...process.env },
     });
 
     let stdout = "";
@@ -36,18 +61,7 @@ export function runMcpSmokeTest(serverRoot: string, workspacePath: string): Prom
 
     child.on("close", (code) => {
       const durationMs = Date.now() - start;
-      let parsed: { initialize?: string; toolCount?: number; check_system?: string } = {};
-      try {
-        const lines = stdout.trim().split(/\r?\n/).filter(Boolean);
-        for (let i = lines.length - 1; i >= 0; i--) {
-          if (lines[i]!.startsWith("{")) {
-            parsed = JSON.parse(lines[i]!);
-            break;
-          }
-        }
-      } catch {
-        // ignore
-      }
+      const parsed = parsePilotReport(stdout);
 
       const pass =
         code === 0 &&
@@ -55,12 +69,19 @@ export function runMcpSmokeTest(serverRoot: string, workspacePath: string): Prom
         (parsed.toolCount ?? 0) >= 1 &&
         parsed.check_system === "PASS";
 
+      const warnNote = stderr.trim() ? `\n(stderr)\n${stderr.trim()}` : "";
+      const failDetail = parsed.error
+        ? `${parsed.error}\n${JSON.stringify(parsed, null, 2)}${warnNote}`
+        : stderr.trim() || stdout || "(không có output)";
+
       resolve({
         ok: pass,
         summary: pass
           ? `PASS — ${parsed.toolCount ?? "?"} công cụ, check_system OK (${durationMs}ms)`
-          : `FAIL — exit ${code ?? "?"}`,
-        detail: pass ? stdout.slice(-1500) : (stderr || stdout).slice(-1500),
+          : `FAIL — exit ${code ?? "?"}${parsed.error ? ` — ${parsed.error}` : ""}`,
+        detail: pass
+          ? `${stdout.slice(-1500)}${warnNote}`.trim()
+          : failDetail.slice(-2000),
         durationMs,
       });
     });
@@ -68,7 +89,8 @@ export function runMcpSmokeTest(serverRoot: string, workspacePath: string): Prom
     child.on("error", (err) => {
       resolve({
         ok: false,
-        summary: `FAIL — ${err.message}`,
+        summary: `FAIL — không chạy được ${nodeCmd}: ${err.message}`,
+        detail: "Đảm bảo Node.js ≥ 18 có trong PATH (giống lúc cài MCP).",
         durationMs: Date.now() - start,
       });
     });

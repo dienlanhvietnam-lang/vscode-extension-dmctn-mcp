@@ -36,7 +36,8 @@ export function getBundledServerRoot(): string {
 export function isBundledServerReady(serverRoot: string): boolean {
   const serverJs = path.join(serverRoot, "dist", "server.js");
   const nodeModules = path.join(serverRoot, "node_modules");
-  return fs.existsSync(serverJs) && fs.existsSync(nodeModules);
+  const pilot = path.join(serverRoot, "scripts", "pilot-stdio.mjs");
+  return fs.existsSync(serverJs) && fs.existsSync(nodeModules) && fs.existsSync(pilot);
 }
 
 export function needsServerBootstrap(
@@ -124,7 +125,7 @@ function runCommand(
   return new Promise((resolve, reject) => {
     const child = spawn(command, args, {
       cwd,
-      shell: process.platform === "win32",
+      shell: false,
       windowsHide: true,
     });
 

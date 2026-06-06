@@ -9,6 +9,11 @@ export interface NodeCheckResult {
 
 export const NODE_DOWNLOAD_URL = "https://nodejs.org/";
 
+/** Node từ PATH — cùng binary mà mcp.json dùng (không phải Node nhúng VS Code/Cursor). */
+export function getSystemNodeCommand(): string {
+  return process.platform === "win32" ? "node.exe" : "node";
+}
+
 /** Parse "v20.11.0" or "20.11.0" → major version. */
 export function parseNodeMajor(versionOutput: string, minMajor = 18): { ok: boolean; major?: number; version?: string } {
   const trimmed = versionOutput.trim().replace(/^v/i, "");
