@@ -6,7 +6,7 @@
   "publisher": "devgol",
   "repository": {
     "type": "git",
-    "url": "https://github.com/devgol/vscode-extension-dmctn-mcp.git"
+    "url": "https://github.com/dienlanhvietnam-lang/vscode-extension-dmctn-mcp.git"
   },
   "license": "MIT",
   "engines": {

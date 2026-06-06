@@ -6,7 +6,7 @@
 param(
   [string]$Version = "0.7.0",
   [string]$McpRoot = (Resolve-Path (Join-Path $PSScriptRoot "..\..\local-coding-tools-mcp")).Path,
-  [string]$Repo = "devgol/local-coding-tools-mcp"
+  [string]$Repo = "dienlanhvietnam-lang/local-coding-tools-mcp"
 )
 
 $ErrorActionPreference = "Stop"

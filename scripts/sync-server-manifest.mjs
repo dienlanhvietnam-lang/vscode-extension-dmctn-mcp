@@ -42,7 +42,7 @@ if (!sha256) {
 const manifest = {
   version,
   zipFileName: zipName,
-  downloadUrl: `https://github.com/devgol/local-coding-tools-mcp/releases/download/v${version}/${zipName}`,
+  downloadUrl: `https://github.com/dienlanhvietnam-lang/local-coding-tools-mcp/releases/download/v${version}/${zipName}`,
   sha256,
   minNodeMajor: 18,
 };
