@@ -71,11 +71,13 @@ export function workspaceNeedsPolicyUpdate(
   const agentText = fs.readFileSync(agentDest, "utf8");
   const instrText = fs.readFileSync(instrDest, "utf8");
   const hasMcpOnly = /MCP_ONLY|BẮT BUỘC/.test(agentText) && /MCP_ONLY|BẮT BUỘC/.test(instrText);
+  const hasTodoAuto = /TODO_AUTO/.test(agentText);
+  const hasResponseStyle = /RESPONSE_STYLE/.test(agentText);
   const hasExplicitTools =
     /local-coding-tools\/check_system/.test(agentText) &&
     /local-coding-tools\/fetch_cached_output/.test(agentText);
 
-  if (!hasMcpOnly || !hasExplicitTools) {
+  if (!hasMcpOnly || !hasExplicitTools || !hasTodoAuto || !hasResponseStyle) {
     return true;
   }
 

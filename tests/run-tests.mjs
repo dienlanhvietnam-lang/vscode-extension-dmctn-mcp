@@ -116,6 +116,8 @@ function testSyncWorkspace() {
   const agent = fs.readFileSync(path.join(tmp, ".github", "agents", "DMCTN-MCP.agent.md"), "utf8");
   assert.ok(agent.includes("local-coding-tools/check_system"));
   assert.ok(agent.includes("MCP_ONLY") || agent.includes("BẮT BUỘC"));
+  assert.ok(agent.includes("TODO_AUTO"));
+  assert.ok(agent.includes("RESPONSE_STYLE"));
   fs.rmSync(tmp, { recursive: true, force: true });
   console.log("PASS syncWorkspaceFiles");
 }
@@ -165,7 +167,7 @@ function testFirstRunPolicyFlags() {
     },
   };
   assert.equal(shouldApplyStartupPolicy(ctx.globalState, cfg), true);
-  assert.equal(POLICY_VERSION, "1");
+  assert.equal(POLICY_VERSION, "3");
   console.log("PASS firstRunPolicyFlags");
 }
 
@@ -283,7 +285,7 @@ function testPackageJson() {
   assert.ok(pkg.contributes?.mcpServerDefinitionProviders?.length);
   assert.ok(pkg.contributes?.viewsContainers?.activitybar?.length);
   assert.ok(pkg.contributes?.views?.dmctnMcp?.length);
-  assert.equal(pkg.version, "0.4.5");
+  assert.equal(pkg.version, "0.4.7");
   assert.ok(pkg.contributes.configuration.properties["dmctnMcp.autoBootstrapServer"]);
   assert.ok(pkg.contributes.configuration.properties["dmctnMcp.autoApplyPolicyOnFirstRun"]);
   assert.ok(pkg.contributes.configuration.properties["dmctnMcp.serverDownloadUrl"]);
