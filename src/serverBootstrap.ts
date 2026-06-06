@@ -317,7 +317,7 @@ export async function ensureMcpServer(options: BootstrapOptions): Promise<Bootst
     const isRemote = /^https?:\/\//i.test(rawUrl);
     // Bust GitHub CDN stale cache after release asset re-upload (SHA256 mismatch otherwise).
     const downloadSource = isRemote
-      ? `${rawUrl}${rawUrl.includes("?") ? "&" : "?"}v=${encodeURIComponent(resolved.version)}`
+      ? `${rawUrl}${rawUrl.includes("?") ? "&" : "?"}t=${Date.now()}`
       : rawUrl;
     logPush(
       log,
