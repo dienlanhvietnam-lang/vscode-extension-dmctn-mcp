@@ -52,7 +52,7 @@ function testServerManifest() {
   assert.equal(m.version, "0.9.0");
   assert.ok(m.downloadUrl.includes("github.com"));
   assert.match(m.sha256, /^[A-F0-9]{64}$/);
-  assert.equal(m.sha256, "DE24914E53BE98FCFE9DE18341180B2D294982BBB80DFD0E84DF19538B51D926");
+  assert.equal(m.sha256, "A8A9064637E99FA50B056F5FFD4150E92E2187705111B9DBB2235D4B4A9A4CBC");
   assert.equal(m.minNodeMajor, 18);
   console.log("PASS serverManifest");
 }
@@ -225,7 +225,7 @@ function testPackageJson() {
   assert.ok(pkg.contributes?.mcpServerDefinitionProviders?.length);
   assert.ok(pkg.contributes?.viewsContainers?.activitybar?.length);
   assert.ok(pkg.contributes?.views?.dmctnMcp?.length);
-  assert.equal(pkg.version, "0.3.7");
+  assert.equal(pkg.version, "0.3.8");
   assert.ok(pkg.contributes.configuration.properties["dmctnMcp.autoBootstrapServer"]);
   assert.ok(pkg.contributes.configuration.properties["dmctnMcp.serverDownloadUrl"]);
   assert.equal(pkg.engines.vscode, "^1.99.0");
