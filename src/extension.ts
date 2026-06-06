@@ -2,9 +2,13 @@ import * as vscode from "vscode";
 import * as path from "node:path";
 import { MCP_PROVIDER_ID, SERVER_LABEL } from "./config";
 import { DashboardProvider } from "./dashboardProvider";
+import {
+  applyStartupPolicy,
+  showFirstRunPolicyNotice,
+  shouldApplyStartupPolicy,
+} from "./firstRunPolicy";
 import { buildMcpJsonContent, resolveServerRoot } from "./paths";
-import { reinstallMcpServer } from "./serverBootstrap";
-import { syncWorkspaceFiles } from "./syncWorkspace";
+import { syncWorkspaceFiles, workspaceNeedsPolicyUpdate } from "./syncWorkspace";
 
 let mcpChangeEmitter = new vscode.EventEmitter<void>();
 let dashboardProvider: DashboardProvider | undefined;
@@ -106,6 +110,8 @@ export function activate(context: vscode.ExtensionContext): void {
 
   context.subscriptions.push(setupCmd, hintCmd, verifyCmd, openDashboardCmd, reinstallCmd);
 
+  void runStartupPolicyFlow(context, templatesRoot, onMcpChanged);
+
   if (vscode.workspace.getConfiguration("dmctnMcp").get<boolean>("autoSyncOnOpen", true)) {
     void runWorkspaceSync(context, templatesRoot, false).then(() => onMcpChanged());
   }
@@ -113,12 +119,47 @@ export function activate(context: vscode.ExtensionContext): void {
   context.subscriptions.push(
     vscode.workspace.onDidChangeWorkspaceFolders(() => {
       mcpChangeEmitter.fire();
+      void runStartupPolicyFlow(context, templatesRoot, onMcpChanged);
       if (vscode.workspace.getConfiguration("dmctnMcp").get<boolean>("autoSyncOnOpen", true)) {
         void runWorkspaceSync(context, templatesRoot, false).then(() => onMcpChanged());
       }
       dashboardProvider?.refresh();
     })
   );
+}
+
+async function runStartupPolicyFlow(
+  context: vscode.ExtensionContext,
+  templatesRoot: string,
+  onMcpChanged: () => void
+): Promise<void> {
+  const cfg = vscode.workspace.getConfiguration("dmctnMcp");
+  if (!shouldApplyStartupPolicy(context.globalState, cfg)) {
+    return;
+  }
+
+  const result = await applyStartupPolicy({
+    context,
+    templatesRoot,
+    isWorkspaceDisabled: (ws) => isWorkspaceMcpDisabled(context, ws),
+    forceOverwrite: true,
+  });
+
+  if (result.applied) {
+    onMcpChanged();
+    showFirstRunPolicyNotice(result);
+    return;
+  }
+
+  if (result.skippedReason === "server-unavailable" || result.skippedReason === "no-workspace") {
+    return;
+  }
+
+  if (result.skippedReason && result.skippedReason !== "policy-up-to-date") {
+    void vscode.window.showWarningMessage(
+      `DMCTN MCP: Chưa áp dụng quy tắc MCP_ONLY — ${result.skippedReason}`
+    );
+  }
 }
 
 async function runWorkspaceSync(
@@ -149,17 +190,20 @@ async function runWorkspaceSync(
   }
 
   const mcpContent = buildMcpJsonContent(resolved.serverJs, resolved.serverRoot);
+  const agentTpl = path.join(templatesRoot, "templates", "DMCTN-MCP.agent.md");
   const outputs: string[] = [];
 
   for (const folder of folders) {
-    if (isWorkspaceMcpDisabled(context, folder.uri.fsPath)) {
+    const ws = folder.uri.fsPath;
+    if (isWorkspaceMcpDisabled(context, ws)) {
       continue;
     }
     const sync = syncWorkspaceFiles({
-      workspaceRoot: folder.uri.fsPath,
+      workspaceRoot: ws,
       mcpJsonContent: mcpContent,
       extensionResourcePath: templatesRoot,
       backupExisting: true,
+      forcePolicy: workspaceNeedsPolicyUpdate(ws, agentTpl),
     });
     if (!sync.ok) {
       void vscode.window.showErrorMessage(sync.errors.join("; "));

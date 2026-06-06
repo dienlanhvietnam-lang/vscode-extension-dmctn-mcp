@@ -2,7 +2,7 @@
   "name": "dmctn-mcp",
   "displayName": "DMCTN MCP — local-coding-tools",
   "description": "Auto-register local-coding-tools MCP and sync DMCTN-MCP Copilot agent for VS Code workspaces.",
-  "version": "0.4.4",
+  "version": "0.4.5",
   "publisher": "devgol",
   "repository": {
     "type": "git",
@@ -79,6 +79,11 @@
           "type": "boolean",
           "default": true,
           "description": "Show a reminder to select the DMCTN-MCP Copilot agent after workspace sync."
+        },
+        "dmctnMcp.autoApplyPolicyOnFirstRun": {
+          "type": "boolean",
+          "default": true,
+          "description": "Lần đầu mở extension (hoặc khi nâng cấp policy) tự ghi DMCTN-MCP agent + copilot-instructions MCP_ONLY (61 tools) vào workspace."
         },
         "dmctnMcp.serverVersion": {
           "type": "string",

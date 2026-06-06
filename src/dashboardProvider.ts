@@ -13,6 +13,7 @@ import {
   readBundledPackageVersion,
   reinstallMcpServer,
 } from "./serverBootstrap";
+import { markStartupPolicyApplied } from "./firstRunPolicy";
 import { syncWorkspaceFiles } from "./syncWorkspace";
 import { uninstallWorkspaceFiles } from "./uninstallWorkspace";
 
@@ -226,6 +227,7 @@ export class DashboardProvider implements vscode.WebviewViewProvider {
           mcpJsonContent: buildMcpJsonContent(resolved.serverJs, resolved.serverRoot),
           extensionResourcePath: this.templatesRoot,
           backupExisting: true,
+          forcePolicy: true,
         });
       }
     }
@@ -322,6 +324,7 @@ export class DashboardProvider implements vscode.WebviewViewProvider {
       mcpJsonContent: buildMcpJsonContent(resolved.serverJs, resolved.serverRoot),
       extensionResourcePath: this.templatesRoot,
       backupExisting: true,
+      forcePolicy: true,
     });
 
     this.busy = false;
@@ -333,11 +336,12 @@ export class DashboardProvider implements vscode.WebviewViewProvider {
     }
 
     await this.setUserDisabled(ws, false);
+    await markStartupPolicyApplied(this.context);
     this.onMcpChanged();
 
     void vscode.window
       .showInformationMessage(
-        "DMCTN MCP: Cài đặt thành công. Reload Window và chọn agent DMCTN-MCP trong Copilot.",
+        "DMCTN MCP: Cài đặt thành công — đã áp dụng quy tắc MCP_ONLY (61 tools). Reload Window và chọn agent DMCTN-MCP.",
         "Tải lại cửa sổ"
       )
       .then((c) => {

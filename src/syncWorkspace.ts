@@ -32,14 +32,19 @@ function writeUtf8NoBom(filePath: string, content: string): void {
   fs.writeFileSync(filePath, content, { encoding: "utf8" });
 }
 
-function copyTemplate(templatePath: string, destPath: string, doBackup: boolean): string {
+function copyTemplate(
+  templatePath: string,
+  destPath: string,
+  doBackup: boolean,
+  force = false
+): string {
   if (!fs.existsSync(templatePath)) {
     throw new Error(`Template missing: ${templatePath}`);
   }
   let action = "written";
   ensureDir(path.dirname(destPath));
   if (fs.existsSync(destPath)) {
-    if (doBackup) {
+    if (doBackup || force) {
       backupIfExists(destPath);
       action = "updated (backed up)";
     } else {
@@ -51,14 +56,50 @@ function copyTemplate(templatePath: string, destPath: string, doBackup: boolean)
   return action;
 }
 
+/** True when workspace agent/instructions lack current MCP_ONLY policy. */
+export function workspaceNeedsPolicyUpdate(
+  workspaceRoot: string,
+  agentTemplatePath: string
+): boolean {
+  const agentDest = path.join(workspaceRoot, ".github", "agents", "DMCTN-MCP.agent.md");
+  const instrDest = path.join(workspaceRoot, ".github", "copilot-instructions.md");
+
+  if (!fs.existsSync(agentDest) || !fs.existsSync(instrDest)) {
+    return true;
+  }
+
+  const agentText = fs.readFileSync(agentDest, "utf8");
+  const instrText = fs.readFileSync(instrDest, "utf8");
+  const hasMcpOnly = /MCP_ONLY|BẮT BUỘC/.test(agentText) && /MCP_ONLY|BẮT BUỘC/.test(instrText);
+  const hasExplicitTools =
+    /local-coding-tools\/check_system/.test(agentText) &&
+    /local-coding-tools\/fetch_cached_output/.test(agentText);
+
+  if (!hasMcpOnly || !hasExplicitTools) {
+    return true;
+  }
+
+  if (!fs.existsSync(agentTemplatePath)) {
+    return false;
+  }
+
+  const templateText = fs.readFileSync(agentTemplatePath, "utf8");
+  const templateTools = (templateText.match(/local-coding-tools\/[a-z_]+/g) ?? []).length;
+  const destTools = (agentText.match(/local-coding-tools\/[a-z_]+/g) ?? []).length;
+  return templateTools > 0 && destTools < templateTools;
+}
+
 export function syncWorkspaceFiles(options: {
   workspaceRoot: string;
   mcpJsonContent: string;
   extensionResourcePath: string;
   backupExisting?: boolean;
+  /** Always overwrite agent + copilot-instructions (first-run / policy upgrade). */
+  forcePolicy?: boolean;
 }): SyncResult {
   const { workspaceRoot, mcpJsonContent, extensionResourcePath } = options;
   const backupExisting = options.backupExisting ?? true;
+  const forcePolicy = options.forcePolicy ?? false;
   const result: SyncResult = {
     ok: true,
     workspaceRoot,
@@ -83,11 +124,11 @@ export function syncWorkspaceFiles(options: {
 
     result.files.push({
       path: agentDest,
-      action: copyTemplate(agentTpl, agentDest, backupExisting),
+      action: copyTemplate(agentTpl, agentDest, backupExisting, forcePolicy),
     });
     result.files.push({
       path: instrDest,
-      action: copyTemplate(instrTpl, instrDest, backupExisting),
+      action: copyTemplate(instrTpl, instrDest, backupExisting, forcePolicy),
     });
   } catch (err) {
     result.ok = false;

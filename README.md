@@ -43,6 +43,7 @@ Badge hiển thị: **Đã cài đặt**, **Node.js**, **MCP server v0.7.0**.
 | `dmctnMcp.autoBootstrapServer` | `true` | Tự tải server khi Cài đặt |
 | `dmctnMcp.autoSyncOnOpen` | `true` | Sync workspace khi mở |
 | `dmctnMcp.showAgentHintOnOpen` | `true` | Nhắc chọn agent |
+| `dmctnMcp.autoApplyPolicyOnFirstRun` | `true` | Lần đầu / nâng cấp policy → tự ghi MCP_ONLY (61 tools) |
 
 ## Lệnh Command Palette
 
