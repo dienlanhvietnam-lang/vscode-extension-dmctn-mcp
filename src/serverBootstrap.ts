@@ -313,7 +313,12 @@ export async function ensureMcpServer(options: BootstrapOptions): Promise<Bootst
     fs.mkdirSync(serversParent, { recursive: true });
 
     const zipPath = path.join(os.tmpdir(), `dmctn-mcp-${resolved.version}-${Date.now()}.zip`);
-    const isRemote = /^https?:\/\//i.test(resolved.downloadUrl.trim());
+    const rawUrl = resolved.downloadUrl.trim();
+    const isRemote = /^https?:\/\//i.test(rawUrl);
+    // Bust GitHub CDN stale cache after release asset re-upload (SHA256 mismatch otherwise).
+    const downloadSource = isRemote
+      ? `${rawUrl}${rawUrl.includes("?") ? "&" : "?"}v=${encodeURIComponent(resolved.version)}`
+      : rawUrl;
     logPush(
       log,
       onProgress,
@@ -321,7 +326,7 @@ export async function ensureMcpServer(options: BootstrapOptions): Promise<Bootst
         ? `Đang tải MCP server v${resolved.version}…`
         : `Đang lấy MCP server v${resolved.version} từ file local…`
     );
-    await acquireZipFile(resolved.downloadUrl, zipPath);
+    await acquireZipFile(downloadSource, zipPath);
 
     logPush(log, onProgress, "Đang xác minh SHA256…");
     const actual = sha256File(zipPath);
