@@ -1,7 +1,7 @@
 {
-  "version": "0.8.0",
-  "zipFileName": "local-coding-tools-mcp-v0.8.0-customer.zip",
-  "downloadUrl": "https://github.com/dienlanhvietnam-lang/local-coding-tools-mcp/releases/download/v0.8.0/local-coding-tools-mcp-v0.8.0-customer.zip",
-  "sha256": "051079091CECF2D6706F91BD7B0B6824531A39E5E974C6E2A706EBD1279433EE",
+  "version": "0.9.0",
+  "zipFileName": "local-coding-tools-mcp-v0.9.0-customer.zip",
+  "downloadUrl": "https://github.com/dienlanhvietnam-lang/local-coding-tools-mcp/releases/download/v0.9.0/local-coding-tools-mcp-v0.9.0-customer.zip",
+  "sha256": "DE24914E53BE98FCFE9DE18341180B2D294982BBB80DFD0E84DF19538B51D926",
   "minNodeMajor": 18
 }

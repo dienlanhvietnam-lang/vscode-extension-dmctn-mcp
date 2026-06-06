@@ -1,5 +1,5 @@
 import { createHash } from "node:crypto";
-import { spawn } from "node:child_process";
+import { spawn, spawnSync } from "node:child_process";
 import * as fs from "node:fs";
 import * as https from "node:https";
 import * as http from "node:http";
@@ -116,17 +116,106 @@ function sha256File(filePath: string): string {
   return hash.digest("hex").toUpperCase();
 }
 
+function winQuote(arg: string): string {
+  if (!/[\s"]/.test(arg)) return arg;
+  return `"${arg.replace(/"/g, '\\"')}"`;
+}
+
+/** Node system dir (PATH) — không dùng Node nhúng VS Code. */
+function findSystemNodeDir(): string | undefined {
+  if (process.platform === "win32") {
+    try {
+      const r = spawnSync("where.exe", ["node.exe"], { encoding: "utf8", windowsHide: true });
+      const first = r.stdout
+        .split(/\r?\n/)
+        .map((l) => l.trim())
+        .find(Boolean);
+      if (first && fs.existsSync(first)) return path.dirname(first);
+    } catch {
+      // ignore
+    }
+    return undefined;
+  }
+  try {
+    const r = spawnSync("which", ["node"], { encoding: "utf8" });
+    const first = r.stdout.trim().split(/\r?\n/)[0];
+    if (first) return path.dirname(first);
+  } catch {
+    // ignore
+  }
+  return undefined;
+}
+
+function resolveNodeCli(
+  command: string,
+  args: string[]
+): { executable: string; args: string[] } | null {
+  const nodeDir = findSystemNodeDir() ?? path.dirname(process.execPath);
+  const cliMap: Record<string, string> = {
+    npm: path.join(nodeDir, "node_modules", "npm", "bin", "npm-cli.js"),
+    npx: path.join(nodeDir, "node_modules", "npm", "bin", "npx-cli.js"),
+  };
+  const cli = cliMap[command];
+  const nodeExe = process.platform === "win32" ? path.join(nodeDir, "node.exe") : path.join(nodeDir, "node");
+  if (cli && fs.existsSync(cli) && fs.existsSync(nodeExe)) {
+    return { executable: nodeExe, args: [cli, ...args] };
+  }
+  return null;
+}
+
+function resolveWin32Executable(command: string): string {
+  if (command.includes(path.sep) || command.includes("/")) return command;
+  if (command.includes(".")) return command;
+  const paths = (process.env.PATH || "").split(";");
+  for (const dir of paths) {
+    if (!dir) continue;
+    const base = path.join(dir, command);
+    for (const ext of [".exe", ".cmd", ".bat"]) {
+      const full = base + ext;
+      if (fs.existsSync(full)) return full;
+    }
+  }
+  return command;
+}
+
+/** Tránh spawn EINVAL: không gọi trực tiếp npm.cmd với shell:false trên Windows. */
+function resolveSpawnTarget(
+  command: string,
+  args: string[]
+): { executable: string; args: string[]; viaCmd: boolean } {
+  const nodeCli = resolveNodeCli(command, args);
+  if (nodeCli) {
+    return { executable: nodeCli.executable, args: nodeCli.args, viaCmd: false };
+  }
+
+  const executable =
+    process.platform === "win32" ? resolveWin32Executable(command) : command;
+
+  if (process.platform === "win32" && /\.(cmd|bat)$/i.test(executable)) {
+    const inner = [executable, ...args.map(winQuote)].join(" ");
+    return {
+      executable: process.env.comspec ?? "cmd.exe",
+      args: ["/d", "/s", "/c", inner],
+      viaCmd: true,
+    };
+  }
+
+  return { executable, args, viaCmd: false };
+}
+
 function runCommand(
   command: string,
   args: string[],
   cwd: string,
   timeoutMs = 300_000
 ): Promise<{ code: number | null; stdout: string; stderr: string }> {
+  const target = resolveSpawnTarget(command, args);
   return new Promise((resolve, reject) => {
-    const child = spawn(command, args, {
+    const child = spawn(target.executable, target.args, {
       cwd,
       shell: false,
       windowsHide: true,
+      windowsVerbatimArguments: target.viaCmd,
     });
 
     let stdout = "";
@@ -259,8 +348,7 @@ export async function ensureMcpServer(options: BootstrapOptions): Promise<Bootst
     }
 
     logPush(log, onProgress, "Đang chạy npm install --omit=dev…");
-    const npmCmd = process.platform === "win32" ? "npm.cmd" : "npm";
-    const npm = await runCommand(npmCmd, ["install", "--omit=dev"], serverRoot);
+    const npm = await runCommand("npm", ["install", "--omit=dev"], serverRoot);
     if (npm.code !== 0) {
       return {
         ok: false,

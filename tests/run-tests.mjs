@@ -49,10 +49,10 @@ function testParseNodeMajor() {
 
 function testServerManifest() {
   const m = loadServerManifest(path.join(ROOT, "resources"));
-  assert.equal(m.version, "0.8.0");
+  assert.equal(m.version, "0.9.0");
   assert.ok(m.downloadUrl.includes("github.com"));
   assert.match(m.sha256, /^[A-F0-9]{64}$/);
-  assert.equal(m.sha256, "051079091CECF2D6706F91BD7B0B6824531A39E5E974C6E2A706EBD1279433EE");
+  assert.equal(m.sha256, "DE24914E53BE98FCFE9DE18341180B2D294982BBB80DFD0E84DF19538B51D926");
   assert.equal(m.minNodeMajor, 18);
   console.log("PASS serverManifest");
 }
@@ -61,8 +61,8 @@ function testBundledServerPaths() {
   const root = getBundledServerRoot();
   assert.ok(root.includes(".dmctn"));
   assert.ok(root.includes("local-coding-tools-mcp"));
-  assert.equal(needsServerBootstrap(root, "0.8.0", undefined), true);
-  assert.equal(needsServerBootstrap(root, "0.8.0", "0.8.0"), !isBundledServerReady(root));
+  assert.equal(needsServerBootstrap(root, "0.9.0", undefined), true);
+  assert.equal(needsServerBootstrap(root, "0.9.0", "0.9.0"), !isBundledServerReady(root));
   console.log("PASS bundledServerPaths");
 }
 
@@ -173,7 +173,7 @@ async function testAcquireZipLocal() {
     "..",
     "local-coding-tools-mcp",
     "release",
-    "local-coding-tools-mcp-v0.8.0-customer.zip"
+    "local-coding-tools-mcp-v0.9.0-customer.zip"
   );
   if (!fs.existsSync(srcZip)) {
     console.log("SKIP acquireZipFile local — customer zip not built");
@@ -193,7 +193,7 @@ async function testExtractZip() {
     "..",
     "local-coding-tools-mcp",
     "release",
-    "local-coding-tools-mcp-v0.8.0-customer.zip"
+    "local-coding-tools-mcp-v0.9.0-customer.zip"
   );
   if (!fs.existsSync(srcZip)) {
     console.log("SKIP extractZip — customer zip not built");
@@ -211,12 +211,12 @@ async function testExtractZip() {
 function testParsePilotReport() {
   const sample = `{
   "initialize": "PASS",
-  "toolCount": 28,
+  "toolCount": 37,
   "check_system": "PASS"
 }`;
   const p = parsePilotReport(sample);
   assert.equal(p.initialize, "PASS");
-  assert.equal(p.toolCount, 28);
+  assert.equal(p.toolCount, 37);
   console.log("PASS parsePilotReport");
 }
 
@@ -225,7 +225,7 @@ function testPackageJson() {
   assert.ok(pkg.contributes?.mcpServerDefinitionProviders?.length);
   assert.ok(pkg.contributes?.viewsContainers?.activitybar?.length);
   assert.ok(pkg.contributes?.views?.dmctnMcp?.length);
-  assert.equal(pkg.version, "0.3.5");
+  assert.equal(pkg.version, "0.3.7");
   assert.ok(pkg.contributes.configuration.properties["dmctnMcp.autoBootstrapServer"]);
   assert.ok(pkg.contributes.configuration.properties["dmctnMcp.serverDownloadUrl"]);
   assert.equal(pkg.engines.vscode, "^1.99.0");
