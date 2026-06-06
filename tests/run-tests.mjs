@@ -49,10 +49,10 @@ function testParseNodeMajor() {
 
 function testServerManifest() {
   const m = loadServerManifest(path.join(ROOT, "resources"));
-  assert.equal(m.version, "0.11.0");
+  assert.equal(m.version, "0.11.1");
   assert.ok(m.downloadUrl.includes("github.com"));
   assert.match(m.sha256, /^[A-F0-9]{64}$/);
-  assert.equal(m.sha256, "75BB851EDE416EBF27254BA92CC066D270B109E53EDA72A5073DF8B243624234");
+  assert.equal(m.sha256, "AEFE0FB4B8A41D1F3DFF396442383928F24235078F733AFC71293F8DC5B83451");
   assert.equal(m.minNodeMajor, 18);
   console.log("PASS serverManifest");
 }
@@ -61,8 +61,8 @@ function testBundledServerPaths() {
   const root = getBundledServerRoot();
   assert.ok(root.includes(".dmctn"));
   assert.ok(root.includes("local-coding-tools-mcp"));
-  assert.equal(needsServerBootstrap(root, "0.11.0", undefined), true);
-  assert.equal(needsServerBootstrap(root, "0.11.0", "0.11.0"), !isBundledServerReady(root));
+  assert.equal(needsServerBootstrap(root, "0.11.1", undefined), true);
+  assert.equal(needsServerBootstrap(root, "0.11.1", "0.11.1"), !isBundledServerReady(root));
   console.log("PASS bundledServerPaths");
 }
 
@@ -173,7 +173,7 @@ async function testAcquireZipLocal() {
     "..",
     "local-coding-tools-mcp",
     "release",
-    "local-coding-tools-mcp-v0.11.0-customer.zip"
+    "local-coding-tools-mcp-v0.11.1-customer.zip"
   );
   if (!fs.existsSync(srcZip)) {
     console.log("SKIP acquireZipFile local — customer zip not built");
@@ -193,7 +193,7 @@ async function testExtractZip() {
     "..",
     "local-coding-tools-mcp",
     "release",
-    "local-coding-tools-mcp-v0.11.0-customer.zip"
+    "local-coding-tools-mcp-v0.11.1-customer.zip"
   );
   if (!fs.existsSync(srcZip)) {
     console.log("SKIP extractZip — customer zip not built");
@@ -225,7 +225,7 @@ function testPackageJson() {
   assert.ok(pkg.contributes?.mcpServerDefinitionProviders?.length);
   assert.ok(pkg.contributes?.viewsContainers?.activitybar?.length);
   assert.ok(pkg.contributes?.views?.dmctnMcp?.length);
-  assert.equal(pkg.version, "0.4.1");
+  assert.equal(pkg.version, "0.4.2");
   assert.ok(pkg.contributes.configuration.properties["dmctnMcp.autoBootstrapServer"]);
   assert.ok(pkg.contributes.configuration.properties["dmctnMcp.serverDownloadUrl"]);
   assert.equal(pkg.engines.vscode, "^1.99.0");
