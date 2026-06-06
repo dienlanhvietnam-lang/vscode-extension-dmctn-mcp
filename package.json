@@ -2,7 +2,7 @@
   "name": "dmctn-mcp",
   "displayName": "DMCTN MCP — local-coding-tools",
   "description": "Auto-register local-coding-tools MCP and sync DMCTN-MCP Copilot agent for VS Code workspaces.",
-  "version": "0.3.8",
+  "version": "0.4.0",
   "publisher": "devgol",
   "repository": {
     "type": "git",
