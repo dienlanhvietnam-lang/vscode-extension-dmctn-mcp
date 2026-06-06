@@ -39,7 +39,7 @@ export function activate(context: vscode.ExtensionContext): void {
           "node",
           [resolved.serverJs],
           { DMCTN_MCP_SERVER_ROOT: resolved.serverRoot },
-          "0.10.0"
+          "0.11.0"
         ),
       ];
     },
