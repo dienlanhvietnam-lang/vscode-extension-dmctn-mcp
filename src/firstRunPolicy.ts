@@ -123,7 +123,7 @@ export function showFirstRunPolicyNotice(
 
   void vscode.window
     .showInformationMessage(
-      `DMCTN MCP: Đã áp dụng quy tắc MCP_ONLY (75 tools) — chọn agent ${AGENT_NAME} trong Copilot.`,
+      `DMCTN MCP: Đã áp dụng quy tắc MCP_ONLY (80 tools) — chọn agent ${AGENT_NAME} trong Copilot.`,
       reload,
       copilot
     )

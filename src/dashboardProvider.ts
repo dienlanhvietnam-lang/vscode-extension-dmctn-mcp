@@ -341,7 +341,7 @@ export class DashboardProvider implements vscode.WebviewViewProvider {
 
     void vscode.window
       .showInformationMessage(
-        "DMCTN MCP: Cài đặt thành công — đã áp dụng quy tắc MCP_ONLY (75 tools). Reload Window và chọn agent DMCTN-MCP.",
+        "DMCTN MCP: Cài đặt thành công — đã áp dụng quy tắc MCP_ONLY (80 tools). Reload Window và chọn agent DMCTN-MCP.",
         "Tải lại cửa sổ"
       )
       .then((c) => {
