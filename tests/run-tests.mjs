@@ -167,7 +167,7 @@ function testFirstRunPolicyFlags() {
     },
   };
   assert.equal(shouldApplyStartupPolicy(ctx.globalState, cfg), true);
-  assert.equal(POLICY_VERSION, "5");
+  assert.equal(POLICY_VERSION, "6");
   console.log("PASS firstRunPolicyFlags");
 }
 
@@ -285,7 +285,7 @@ function testPackageJson() {
   assert.ok(pkg.contributes?.mcpServerDefinitionProviders?.length);
   assert.ok(pkg.contributes?.viewsContainers?.activitybar?.length);
   assert.ok(pkg.contributes?.views?.dmctnMcp?.length);
-  assert.equal(pkg.version, "0.5.3");
+  assert.equal(pkg.version, "0.5.4");
   assert.ok(pkg.contributes.configuration.properties["dmctnMcp.autoBootstrapServer"]);
   assert.ok(pkg.contributes.configuration.properties["dmctnMcp.autoApplyPolicyOnFirstRun"]);
   assert.ok(pkg.contributes.configuration.properties["dmctnMcp.serverDownloadUrl"]);
