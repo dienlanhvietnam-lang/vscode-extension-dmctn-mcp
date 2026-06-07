@@ -74,12 +74,13 @@ export function workspaceNeedsPolicyUpdate(
   const hasTodoAuto = /TODO_AUTO/.test(agentText);
   const hasResponseStyle = /RESPONSE_STYLE/.test(agentText);
   const hasUiDesignLoop = /UI_DESIGN_LOOP/.test(agentText);
+  const hasMemoryLoop = /MEMORY_LOOP/.test(agentText);
   const hasExplicitTools =
     /local-coding-tools\/check_system/.test(agentText) &&
     /local-coding-tools\/fetch_cached_output/.test(agentText) &&
     /local-coding-tools\/capture_screenshot/.test(agentText);
 
-  if (!hasMcpOnly || !hasExplicitTools || !hasTodoAuto || !hasResponseStyle || !hasUiDesignLoop) {
+  if (!hasMcpOnly || !hasExplicitTools || !hasTodoAuto || !hasResponseStyle || !hasUiDesignLoop || !hasMemoryLoop) {
     return true;
   }
 
