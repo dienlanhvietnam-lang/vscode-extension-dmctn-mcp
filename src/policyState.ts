@@ -1,5 +1,5 @@
 /** Bump when DMCTN-MCP.agent.md / copilot-instructions templates change materially. */
-export const POLICY_VERSION = "3";
+export const POLICY_VERSION = "4";
 
 export const GLOBAL_FIRST_RUN_KEY = "dmctnMcp.firstRunCompleted";
 export const GLOBAL_POLICY_VERSION_KEY = "dmctnMcp.appliedPolicyVersion";
