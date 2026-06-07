@@ -57,10 +57,10 @@ function testParseNodeMajor() {
 
 function testServerManifest() {
   const m = loadServerManifest(path.join(ROOT, "resources"));
-  assert.equal(m.version, "0.16.0");
+  assert.equal(m.version, "0.17.0");
   assert.ok(m.downloadUrl.includes("github.com"));
   assert.match(m.sha256, /^[A-F0-9]{64}$/);
-  assert.equal(m.sha256, "D803C167BD0C756FB4D309426228C414ACEED9046A3CF9990E92F9535059C431");
+  assert.equal(m.sha256, "8A36F8CAABF8E032352D1E2D3FA44BCF54B490A10E5BED163B92360D8A9BFE83");
   assert.equal(m.minNodeMajor, 18);
   console.log("PASS serverManifest");
 }
@@ -69,8 +69,8 @@ function testBundledServerPaths() {
   const root = getBundledServerRoot();
   assert.ok(root.includes(".dmctn"));
   assert.ok(root.includes("local-coding-tools-mcp"));
-  assert.equal(needsServerBootstrap(root, "0.16.0", undefined), true);
-  assert.equal(needsServerBootstrap(root, "0.16.0", "0.16.0"), !isBundledServerReady(root));
+  assert.equal(needsServerBootstrap(root, "0.17.0", undefined), true);
+  assert.equal(needsServerBootstrap(root, "0.17.0", "0.17.0"), !isBundledServerReady(root));
   console.log("PASS bundledServerPaths");
 }
 
@@ -169,7 +169,7 @@ function testFirstRunPolicyFlags() {
     },
   };
   assert.equal(shouldApplyStartupPolicy(ctx.globalState, cfg), true);
-  assert.equal(POLICY_VERSION, "7");
+  assert.equal(POLICY_VERSION, "8");
   console.log("PASS firstRunPolicyFlags");
 }
 
@@ -235,7 +235,7 @@ async function testAcquireZipLocal() {
     "..",
     "local-coding-tools-mcp",
     "release",
-    "local-coding-tools-mcp-v0.16.0-customer.zip"
+    "local-coding-tools-mcp-v0.17.0-customer.zip"
   );
   if (!fs.existsSync(srcZip)) {
     console.log("SKIP acquireZipFile local — customer zip not built");
@@ -255,7 +255,7 @@ async function testExtractZip() {
     "..",
     "local-coding-tools-mcp",
     "release",
-    "local-coding-tools-mcp-v0.16.0-customer.zip"
+    "local-coding-tools-mcp-v0.17.0-customer.zip"
   );
   if (!fs.existsSync(srcZip)) {
     console.log("SKIP extractZip — customer zip not built");
@@ -287,7 +287,7 @@ function testPackageJson() {
   assert.ok(pkg.contributes?.mcpServerDefinitionProviders?.length);
   assert.ok(pkg.contributes?.viewsContainers?.activitybar?.length);
   assert.ok(pkg.contributes?.views?.dmctnMcp?.length);
-  assert.equal(pkg.version, "0.5.5");
+  assert.equal(pkg.version, "0.5.6");
   assert.ok(pkg.contributes.configuration.properties["dmctnMcp.autoBootstrapServer"]);
   assert.ok(pkg.contributes.configuration.properties["dmctnMcp.autoApplyPolicyOnFirstRun"]);
   assert.ok(pkg.contributes.configuration.properties["dmctnMcp.serverDownloadUrl"]);
